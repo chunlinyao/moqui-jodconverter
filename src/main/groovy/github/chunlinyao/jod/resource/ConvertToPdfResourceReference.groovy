@@ -20,7 +20,8 @@ import org.jodconverter.core.DocumentConverter
 import org.jodconverter.core.document.DefaultDocumentFormatRegistry
 import org.moqui.entity.EntityValue
 import org.moqui.impl.context.ExecutionContextFactoryImpl
-import org.moqui.impl.context.reference.DbResourceReference
+import org.moqui.impl.context.reference.BaseResourceReference
+import org.moqui.impl.context.reference.WrapperResourceReference
 import org.moqui.resource.ResourceReference
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -28,12 +29,12 @@ import org.slf4j.LoggerFactory
 // NOTE: IDE says this isn't needed but compiler requires it
 
 @CompileStatic
-class ConvertToPdfDbResourceReference extends DbResourceReference {
-    protected final static Logger logger = LoggerFactory.getLogger(ConvertToPdfDbResourceReference.class)
+class ConvertToPdfResourceReference extends WrapperResourceReference {
+    protected final static Logger logger = LoggerFactory.getLogger(ConvertToPdfResourceReference.class)
     public static final String PREFIX = "jod+pdf+"
-    public final static String locationPrefix = PREFIX + "dbresource://"
+    String location
 
-    ConvertToPdfDbResourceReference() {}
+    ConvertToPdfResourceReference() {}
 
     @Override
     ResourceReference init(String location, ExecutionContextFactoryImpl ecf) {
@@ -41,58 +42,55 @@ class ConvertToPdfDbResourceReference extends DbResourceReference {
         if (end > -1) {
             end = end - 1
         }
-        super.init(location ? location[PREFIX.length()..end] : location, ecf)
-        return this
-    }
-
-    ResourceReference init(String location, EntityValue dbResource, ExecutionContextFactoryImpl ecf) {
-        super.init(location ? location[1..-1] : location, dbResource, ecf)
+        this.ecf = ecf
+        this.location = location
+        setRr(ecf.resource.getLocationReference(location ? location[PREFIX.length()..end] : location))
         return this
     }
 
     @Override
     ResourceReference createNew(String location) {
-        throw new UnsupportedOperationException("WaterMark resource not support create new.")
+        throw new UnsupportedOperationException("ConvertToPdf resource not support create new.")
     }
 
     @Override
     String getFileName() {
         if (isSupportedFile()) {
-            return FilenameUtils.getBaseName(super.getFileName()) + 'pdf'
+            return FilenameUtils.getBaseName(this.rr.getFileName()) + 'pdf'
         } else {
-            return super.getFileName()
+            return this.rr.getFileName()
         }
     }
 
     @Override
     InputStream openStream() {
         if (isSupportedFile()) {
-            return convertedStream(super.openStream())
+            return convertedStream(this.rr.openStream())
         } else {
-            return super.openStream()
+            return this.rr.openStream()
         }
     }
 
     @Override
-    boolean supportsSize() { true }
+    boolean supportsSize() { false }
 
     @Override
     long getSize() {
-        return super.getSize()
+        return this.rr.getSize()
     }
 
     @Override
     InputStream openStream(String versionName) {
         if (isSupportedFile()) {
-            def originStream = super.openStream(versionName)
+            def originStream = this.rr.openStream(versionName)
             return convertedStream(originStream)
         } else {
-            return super.openStream(versionName)
+            return this.rr.openStream(versionName)
         }
     }
 
     private InputStream convertedStream(InputStream originStream) {
-        def format = DefaultDocumentFormatRegistry.getFormatByExtension(FilenameUtils.getExtension(super.getFileName()))
+        def format = DefaultDocumentFormatRegistry.getFormatByExtension(FilenameUtils.getExtension(this.rr.getFileName()))
         DocumentConverter converter = ecf.getTool(JodConverterToolFactory.getTOOL_NAME(), DocumentConverter)
         def stream = new ByteArrayOutputStream()
         converter.convert(originStream).as(format).to(stream).as(DefaultDocumentFormatRegistry.PDF).execute()
@@ -105,16 +103,16 @@ class ConvertToPdfDbResourceReference extends DbResourceReference {
         if (isSupportedFile()) {
             return "application/pdf"
         }
-        return super.getContentType()
+        return this.rr.getContentType()
     }
 
     private boolean isSupportedFile() {
-        def extension = FilenameUtils.getExtension(super.getFileName())
+        def extension = FilenameUtils.getExtension(this.rr.getFileName())
         return (extension != null) && extension.toLowerCase() in ['docx', 'xlsx', 'doc', 'xls', 'ppt', 'pptx']
     }
 
     @Override
     long getLastModified() {
-        return super.getLastModified()
+        return this.rr.getLastModified()
     }
 }

@@ -6,6 +6,12 @@
         <tool-factory class="github.chunlinyao.jod.JodConverterToolFactory" init-priority="50" disabled="false"/>
     </tools>
     <resource-facade>
-        <resource-reference scheme="jod+pdf+dbresource" class="github.chunlinyao.jod.resource.ConvertToPdfDbResourceReference"/>
+        <resource-reference scheme="jod+pdf+dbresource" class="github.chunlinyao.jod.resource.ConvertToPdfResourceReference"/>
+        <resource-reference scheme="jod+pdf+http" class="github.chunlinyao.jod.resource.ConvertToPdfResourceReference"/>
+        <resource-reference scheme="jod+pdf+https" class="github.chunlinyao.jod.resource.ConvertToPdfResourceReference"/>
+        <resource-reference scheme="jod+pdf+file" class="github.chunlinyao.jod.resource.ConvertToPdfResourceReference"/>
+        <resource-reference scheme="jod+pdf+jar" class="github.chunlinyao.jod.resource.ConvertToPdfResourceReference"/>
+        <resource-reference scheme="jod+pdf+component" class="github.chunlinyao.jod.resource.ConvertToPdfResourceReference"/>
+        <resource-reference scheme="jod+pdf+classpath" class="github.chunlinyao.jod.resource.ConvertToPdfResourceReference"/>
     </resource-facade>
 </moqui-conf>
