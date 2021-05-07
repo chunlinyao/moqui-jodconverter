@@ -15,12 +15,16 @@ package github.chunlinyao.jod
 
 import groovy.transform.CompileStatic
 import org.jodconverter.core.DocumentConverter
+import org.jodconverter.core.office.OfficeManager
 import org.jodconverter.core.office.OfficeUtils
 import org.jodconverter.local.LocalConverter
 import org.jodconverter.local.office.LocalOfficeManager
 import org.jodconverter.local.office.LocalOfficeUtils
+import org.jodconverter.remote.RemoteConverter
+import org.jodconverter.remote.office.RemoteOfficeManager
 import org.moqui.context.ExecutionContextFactory
 import org.moqui.context.ToolFactory
+import org.moqui.util.SystemBinding
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -35,9 +39,9 @@ class JodConverterToolFactory implements ToolFactory<DocumentConverter> {
 
     protected ExecutionContextFactory ecf = null
 
-    LocalOfficeManager officeManager
-    LocalConverter documentConverter
-
+    OfficeManager officeManager
+    DocumentConverter documentConverter
+    volatile boolean started = false
     /** Default empty constructor */
     JodConverterToolFactory() {}
 
@@ -47,17 +51,38 @@ class JodConverterToolFactory implements ToolFactory<DocumentConverter> {
     @Override
     void init(ExecutionContextFactory ecf) {
         this.ecf = ecf
-        officeManager = LocalOfficeManager.install()
-        officeManager.start()
-        documentConverter = LocalConverter.make(officeManager)
     }
 
+    void ensureStarted() {
+        if (!started) {
+            // remote office url
+            synchronized(this) {
+                if (!started) {
+                    try {
+                        String remoteOfficeUrl = SystemBinding.getPropOrEnv("REMOTE_OFFICE_URL")
+                        if (!remoteOfficeUrl) {
+                            officeManager = LocalOfficeManager.install()
+                            officeManager.start()
+                            documentConverter = LocalConverter.make(officeManager)
+                        } else {
+                            officeManager = RemoteOfficeManager.make(remoteOfficeUrl)
+                            officeManager.start()
+                            documentConverter = RemoteConverter.make(officeManager)
+                        }
+                    } finally {
+                        started = true
+                    }
+                }
+            }
+        }
+    }
     @Override
     void preFacadeInit(ExecutionContextFactory ecf) {}
 
     /** Requires 2 parameters: OutputStream out, String contentType */
     @Override
     DocumentConverter getInstance(Object... parameters) {
+        ensureStarted()
         return documentConverter
     }
 

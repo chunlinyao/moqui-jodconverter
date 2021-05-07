@@ -46,13 +46,9 @@ tasks.withType(GroovyCompile) { options.compilerArgs << "-proc:none" }
 
 dependencies {
     compile project(':framework')
-    compile 'org.jodconverter:jodconverter-local:4.3.0-yao'
-    compile 'org.jodconverter:jodconverter-core:4.3.0-yao'
-    compile 'com.google.code.gson:gson:2.8.6'
-    compile 'org.openoffice:juh:4.1.2'
-    compile 'org.openoffice:jurt:4.1.2'
-    compile 'org.openoffice:ridl:4.1.2'
-    compile 'org.openoffice:unoil:4.1.2'
+    compile 'org.jodconverter:jodconverter-local:4.4.2'
+    compile 'org.jodconverter:jodconverter-remote:4.4.2'
+    compile 'org.jodconverter:jodconverter-core:4.4.2'
 }
 
 // by default the Java plugin runs test on build, change to not do that (only run test if explicit task)
